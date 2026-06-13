@@ -1,0 +1,130 @@
+# AACP Project Context
+
+You are working on AACP (Aviation & Aerospace Competence Program), a minimum viable product workforce intelligence and competency validation platform for a 50-participant pilot cohort in aviation and aerospace.
+
+## Goals
+
+Build an MVP that supports:
+
+- Youth career exploration and competency development
+- AI-powered career coach, competency evaluator, workforce analyst, and matching engine
+- Executive dashboard for aviation employers and airport leadership
+- Workforce intelligence layer: talent readiness, pipeline analytics, gap mapping
+- Competency validation aligned with aviation and aerospace standards
+- Data handling and privacy controls aligned to Canadian requirements
+
+## Constraints
+
+- MVP size: 50 participants in a pilot cohort
+- Industry: aviation and aerospace in Canada
+- Must align with:
+  - Canadian Aviation Regulations (CARs) where applicable
+  - Transport Canada training, licensing, and competency guidance
+  - PIPEDA-aligned data handling and privacy requirements for applicable organizations
+- Mobile-first, responsive, accessible (WCAG 2.1)
+- Keep complexity low; avoid over-engineering for the pilot
+- Do not implement full AR/VR, blockchain credentials, or deep HRIS integrations in MVP
+
+## Technology Stack
+
+- Frontend: React or Vue with TypeScript, responsive, mobile-first
+- Backend: Node.js or Python with REST or GraphQL API
+- Auth: OAuth2 or JWT
+- Database: PostgreSQL for core data, object storage for files
+- Analytics warehouse: optional (BigQuery or Snowflake) for cohort and workforce reporting
+- AI: LLM-based service with agent modules for:
+  - Career Coach
+  - Competency Evaluator (VR telemetry-powered, emits CompetencyIndex)
+  - Workforce Analyst
+  - Matching Engine
+
+## VR telemetry integration
+- Capture simulator and immersive training session telemetry via Unity or WebXR APIs.
+- Use event, timing, motion, and task-completion telemetry to support automated CompetencyIndex evaluation.
+- Keep VR telemetry processing separate from manual review workflows; the normal path is automated.
+
+## Auth and RBAC
+- Implement auth endpoints for:
+  - `POST /auth/register`
+  - `POST /auth/login`
+  - `POST /auth/logout`
+  - `POST /auth/refresh`
+- Use JWT-based authentication with refresh tokens for the MVP and support multi-factor authentication for coach and admin roles.
+- Optionally support OAuth2 Authorization Code flow with PKCE in later phases.
+- Enforce RBAC for four roles:
+  - `youth`: view own data, submit evidence, view own dashboards and readiness/index data
+  - `coach`: view cohort data, review evidence, assign tasks, add coaching guidance
+  - `employer`: view anonymized readiness/index analytics, export reports, review match recommendations
+  - `admin`: full access, manage cohorts, roles, competency frameworks, users, consent, and audit logs
+- Prefer lightweight session management for the pilot and log auth decisions for auditability.
+- Keep PIPEDA-aligned data handling in mind: store the minimum personal data, protect tokens, log consent, and use secure refresh token storage.
+- Define privacy controls for consent, purpose statements, retention, and deletion.
+- Capture audit logs for auth events, data access, consent changes, RBAC decisions, and AI-driven readiness/index actions.
+- Preserve audit trails even when underlying data subject records are removed.
+
+## Core Entities
+
+The main entities in the system are:
+
+- User (with roles: youth, coach, employer, admin)
+- Cohort
+- RoleFamily
+- Role
+- Competency
+- CompetencyRubric
+- Assessment
+- AssessmentResult
+- Evidence
+- CompetencyIndex
+- ReadinessIndex
+- Match
+- AuditLog
+- ConsentRecord
+- RegulatoryReference
+
+## Regulatory and Compliance Requirements
+
+AACP must:
+
+- Map competencies to aviation and aerospace role families aligned with CARs and Transport Canada guidance where applicable
+- Support pilot-related pathways and licensing progression where relevant (permits, licences, ratings, medical requirements)
+- Display source references for regulatory or training guidance
+- Treat AI outputs as decision support, not authoritative compliance rulings
+- Require human review for regulatory-sensitive outputs; the Competency Evaluator uses VR telemetry and produces automated CompetencyIndex outputs without manual review in the standard flow
+- Keep rationale logs for CompetencyIndex and ReadinessIndex decisions, scoring, and matching decisions
+
+AACP must also:
+
+- Collect only the minimum personal information needed for the pilot
+- Obtain and record consent for personal data processing
+- Support privacy notices, retention rules, and access controls
+- Protect data using encryption, RBAC, audit logs, and secure storage
+- Be designed for PIPEDA-aligned data handling for Canadian operations and federally regulated partners
+
+## Project Workflow
+
+1. Start in planning mode:
+   - Ask for the user's goal
+   - Propose a step-by-step plan
+   - Wait for confirmation before writing code
+
+2. Use incremental steps:
+   - Set up project structure
+   - Create core entities and APIs
+   - Implement dashboards
+   - Integrate AI agents
+   - Add auth and RBAC
+   - Add privacy and audit features
+
+3. Write small, testable changes.
+
+4. Always summarize what was changed and what to test next.
+
+## Response Style
+
+- Be concise and practical.
+- Prefer bullet points over long paragraphs.
+- Use tables for entities, APIs, and dashboards.
+- Flag regulatory-sensitive or privacy-sensitive areas for human review.
+- Do not generate legal advice or authoritative regulatory interpretations.
+- When discussing regulatory content, show it as guidance with source references.

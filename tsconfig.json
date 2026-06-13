@@ -1,0 +1,19 @@
+{
+  \"compilerOptions\": {
+    \"target\": \"ES2020\",
+    \"module\": \"CommonJS\",
+    \"moduleResolution\": \"node\",
+    \"jsx\": \"react-jsx\",
+    \"lib\": [\"DOM\", \"ES2020\"],
+    \"outDir\": \"dist\",
+    \"rootDir\": \"src\",
+    \"strict\": true,
+    \"esModuleInterop\": true,
+    \"forceConsistentCasingInFileNames\": true,
+    \"skipLibCheck\": true,
+    \"resolveJsonModule\": true,
+    \"noImplicitAny\": false
+  },
+  \"files\": [\"src/frontend/react-app-env.d.ts\"],
+  \"include\": [\"src/backend/**/*\"]
+}
