@@ -1,7 +1,7 @@
 # AACP Requirements
 
 ## MVP Scope
-- Build a pilot workforce intelligence and competency validation platform for a 100-participant aviation/aerospace cohort.
+- Build a pilot workforce intelligence and competency validation platform for a 50-participant aviation/aerospace cohort.
 - Keep the solution minimally viable: mobile-first, responsive, accessible, and low complexity.
 - Include youth career exploration, competency assessment, AI advisory guidance, workforce analytics, and matching recommendations.
 - Use ACIA (career-intelligence indexing) as the default front-door entry for youth; reserve the cohort session (pathway selection, competency assessment) for participants who are invited via ACIA readiness or approved as early-career professionals.
