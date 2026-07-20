@@ -81,6 +81,73 @@ The main entities in the system are:
 - AuditLog
 - ConsentRecord
 - RegulatoryReference
+- ACIASession
+- ACIAScenario
+- ACIAObservation
+- ACIAIndex
+- ACIARetentionSignal
+- CohortEligibility
+
+## ACIA Module (Career Intelligence Front Door)
+
+ACIA (Aviation Career Intelligence & Alignment) is the front-door layer of AACP. It sits before pathway selection and the cohort session, and produces a career alignment profile that also feeds retention analytics after placement.
+
+### Entry model
+
+- Youth and early-stage participants enter through ACIA by default. The cohort session is never the default entry point.
+- The cohort session (pathway selection, competency assessment, placement) is reserved for participants whose `User.cohortAccessStatus` is `invited` or `enrolled`.
+- Two paths into eligibility:
+  - `acia_readiness_signal` — a youth participant completes ACIA and a coach confirms readiness for advanced engagement.
+  - `early_career_approval` — an early-career professional submits a lightweight application and an admin/coach approves it.
+- ACIA uses indexing (tiered bands per pathway/dimension), never a composite score, and never presents a pass/fail outcome to the participant.
+
+### Transition step (ACIA → Cohort Session)
+
+The move from ACIA into the cohort session is an explicit, rule-based decision step — not an automatic unlock and not an ML classifier. It runs once ACIA is complete and considers four inputs:
+
+1. `aciaCompletionStatus` — has the participant finished their ACIA session.
+2. Readiness indicators — count of `ACIAIndex` bands at `Aligned`/`Strong` against a fixed, documented threshold (`ACIA_READINESS_BAND_THRESHOLD`).
+3. `participantIntent` (`ready_to_continue`|`not_yet`|`undecided`) — the participant's own stated intent, captured on the Career Alignment Profile screen; never assumed.
+4. Staff approval (`not_required`|`pending`|`approved`|`declined`) — a coach's confirmation, required whenever the rule leans toward inviting someone.
+
+The rule always resolves to exactly one of three outcomes:
+
+- **`invite_to_cohort`** — ACIA complete, readiness threshold met, intent is `ready_to_continue`, staff approval is `approved`.
+- **`remain_in_acia`** — ACIA incomplete, intent is `not_yet`, or staff has declined; always paired with a `recommendedNextAction` message, never a rejection notice.
+- **`flag_for_review`** — signals conflict (e.g. strong readiness but undecided intent, or intent to continue without enough readiness signal, or everything aligned but staff approval still pending); paired with a `reviewReason` and routed to the coach review queue.
+
+The rule logic lives in `worker.js` as `evaluateAciaTransition()`, is versioned (`ruleVersion`) for auditability, and is deliberately simple/transparent — thresholds and branches only, no hidden weighting.
+
+### Entities (extends Core Entities above)
+
+- `ACIASession` — one full ACIA run for a user (status, pathway scope, timestamps).
+- `ACIAScenario` — a reusable scenario/simulation definition tagged by pathway and behavioral dimension.
+- `ACIAObservation` — raw behavioral capture per scenario response (response time, retries, raw telemetry payload).
+- `ACIAIndex` — computed per-pathway, per-dimension index bands from a completed session; this is the "career alignment profile" shown to the participant.
+- `ACIARetentionSignal` — post-placement check-in compared against the baseline `ACIAIndex`, surfaced to coach/employer dashboards as a drift flag.
+- `CohortEligibility` — the gate record tracking how and whether a participant becomes eligible for the cohort session (`source`, `status`, `reviewedBy`, `applicationNote`). `status` now also includes `flagged_for_review`, and it carries `transitionDecisionId`.
+- `ACIATransitionDecision` — one row per rule evaluation: `userId`, `aciaSessionId`, `inputsSnapshot` (the four inputs above), `outcome`, `recommendedNextAction` or `reviewReason`, `ruleVersion`, `decidedAt`.
+
+Field additions to existing entities: `User.entryPath` (`youth`|`early_career_professional`), `User.cohortAccessStatus` (`acia_only`|`invited`|`enrolled`), `User.cohortIntent` (`ready_to_continue`|`not_yet`|`undecided`, participant-set), `Match.aciaIndexSessionAtPlacement`, `ConsentRecord.scope` gains `acia_assessment`, `AuditLog.action` gains `acia_index_generated`, `acia_index_viewed`, `acia_retention_signal_generated`, `acia_transition_decided`.
+
+### Minimal screens (MVP)
+
+| Screen | Rail | Notes |
+|---|---|---|
+| ACIA Welcome | Youth | Platform front door; folds in lightweight signup + consent |
+| ACIA Scenario Runner | Youth | Sequential scenario/simulation presentation |
+| Career Alignment Profile | Youth | Per-pathway bands; captures `cohortIntent` via an explicit action; shows the transition outcome inline as one of three states — "keep exploring" (`remain_in_acia`), "with your coach" (`flag_for_review`), or "you're invited" (`invite_to_cohort`) — never pass/fail |
+| Early-Career Application | Early-career | Lightweight form, separate from ACIA scenarios |
+| Cohort Invitation / Welcome | Youth + early-career | Soft, celebratory framing into the cohort session |
+| Pathway Selection | Cohort session | Moved inside the cohort session as its first step, informed by the carried-over profile |
+
+Readiness review, `flag_for_review` transitions, and early-career approval all reuse the existing coach/admin review-queue pattern — no dedicated new screens for the pilot.
+
+### Routes (see worker.js for stub implementations)
+
+`POST /acia/session/start`, `GET /acia/session/:sessionId/next`, `POST /acia/observations`, `POST /acia/session/:sessionId/complete`, `GET /acia/index/:userId`, `POST /acia/transition/:userId/intent`, `POST /acia/transition/:userId/evaluate`, `GET /acia/transition/:userId`, `POST /early-career/application`, `GET /cohort-eligibility`, `POST /cohort-eligibility/:id/decision`, `GET /cohort/invite-status/:userId`, `GET /acia/retention-signals`, `POST /acia/retention-signals/generate`.
+
+`evaluate` is the only ACIA route that runs real logic (`evaluateAciaTransition()`); every other ACIA/cohort route remains a mock-response stub pending persistence.
 
 ## Regulatory and Compliance Requirements
 

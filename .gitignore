@@ -5,3 +5,4 @@ dist/
 src/**/*.js
 src/**/*.map
 *.DS_Store
+.wrangler/
